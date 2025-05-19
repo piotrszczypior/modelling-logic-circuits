@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="circuit" nsURI="http://www.example.org/circuit" nsPrefix="circuit">
+  <eClassifiers xsi:type="ecore:EClass" name="LogicCircuit" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
+        changeable="false"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="gates" upperBound="-1"
+        eType="#//LogicGate" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="connections" lowerBound="1"
+        upperBound="-1" eType="#//Connection" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="outputs" lowerBound="1"
+        upperBound="-1" eType="#//OutputTerminal" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="inputs" lowerBound="1"
+        upperBound="-1" eType="#//InputTerminal" containment="true"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="LogicElement" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="id" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="GateType">
+    <eLiterals name="AND"/>
+    <eLiterals name="OR" value="1"/>
+    <eLiterals name="NOT" value="2"/>
+    <eLiterals name="NAND" value="3"/>
+    <eLiterals name="NOR" value="4"/>
+    <eLiterals name="XOR" value="5"/>
+    <eLiterals name="NXOR" value="6"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="LogicGate" eSuperTypes="#//LogicElement">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" lowerBound="1" eType="#//GateType"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="inputs" lowerBound="1"
+        upperBound="-1" eType="#//Connection" eOpposite="#//Connection/targetGate"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="output" lowerBound="1"
+        eType="#//Connection" eOpposite="#//Connection/sourceGate"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="Connection" eSuperTypes="#//LogicElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sourceGate" eType="#//LogicGate"
+        eOpposite="#//LogicGate/output"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="targetGate" eType="#//LogicGate"
+        eOpposite="#//LogicGate/inputs"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sourceTerminal" eType="#//InputTerminal"
+        eOpposite="#//InputTerminal/input"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="targetTerminal" eType="#//OutputTerminal"
+        eOpposite="#//OutputTerminal/output"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="OutputTerminal" eSuperTypes="#//LogicElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="output" lowerBound="1"
+        eType="#//Connection" eOpposite="#//Connection/targetTerminal"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="InputTerminal" eSuperTypes="#//LogicElement">
+    <eStructuralFeatures xsi:type="ecore:EReference" name="input" lowerBound="1" eType="#//Connection"
+        eOpposite="#//Connection/sourceTerminal"/>
+  </eClassifiers>
+</ecore:EPackage>
