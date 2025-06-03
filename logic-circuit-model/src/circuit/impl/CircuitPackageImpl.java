@@ -12,12 +12,14 @@ import circuit.LogicElement;
 import circuit.LogicGate;
 import circuit.OutputTerminal;
 
+import circuit.util.CircuitValidator;
 import org.eclipse.emf.ecore.EAttribute;
 import org.eclipse.emf.ecore.EClass;
 import org.eclipse.emf.ecore.EEnum;
 import org.eclipse.emf.ecore.EPackage;
 import org.eclipse.emf.ecore.EReference;
 
+import org.eclipse.emf.ecore.EValidator;
 import org.eclipse.emf.ecore.impl.EPackageImpl;
 
 /**
@@ -127,6 +129,16 @@ public class CircuitPackageImpl extends EPackageImpl implements CircuitPackage {
 
 		// Initialize created meta-data
 		theCircuitPackage.initializePackageContents();
+
+		// Register package validator
+		EValidator.Registry.INSTANCE.put
+			(theCircuitPackage,
+			 new EValidator.Descriptor() {
+				 @Override
+				 public EValidator getEValidator() {
+					 return CircuitValidator.INSTANCE;
+				 }
+			 });
 
 		// Mark meta-data to indicate it can't be changed
 		theCircuitPackage.freeze();
@@ -501,6 +513,44 @@ public class CircuitPackageImpl extends EPackageImpl implements CircuitPackage {
 
 		// Create resource
 		createResource(eNS_URI);
+
+		// Create annotations
+		// http://www.eclipse.org/emf/2002/Ecore
+		createEcoreAnnotations();
+		// http://www.eclipse.org/emf/2002/Ecore/OCL/Pivot
+		createPivotAnnotations();
+	}
+
+	/**
+	 * Initializes the annotations for <b>http://www.eclipse.org/emf/2002/Ecore</b>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void createEcoreAnnotations() {
+		String source = "http://www.eclipse.org/emf/2002/Ecore";
+		addAnnotation
+		  (logicGateEClass,
+		   source,
+		   new String[] {
+			   "constraints", "NotGateShouldHaveOneInput"
+		   });
+	}
+
+	/**
+	 * Initializes the annotations for <b>http://www.eclipse.org/emf/2002/Ecore/OCL/Pivot</b>.
+	 * <!-- begin-user-doc -->
+	 * <!-- end-user-doc -->
+	 * @generated
+	 */
+	protected void createPivotAnnotations() {
+		String source = "http://www.eclipse.org/emf/2002/Ecore/OCL/Pivot";
+		addAnnotation
+		  (logicGateEClass,
+		   source,
+		   new String[] {
+			   "NotGateShouldHaveOneInput", "self.type = GateType::NOT implies self.inputs->size() = 1"
+		   });
 	}
 
 } //CircuitPackageImpl

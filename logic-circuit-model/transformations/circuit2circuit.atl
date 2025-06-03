@@ -1,0 +1,52 @@
+-- @path CIRCUIT=/logic-circuit-model/model/circuit.ecore
+
+module circuit2circuit;
+create OUT : CIRCUIT refining IN : CIRCUIT;
+
+
+
+rule ModifyGateName {
+    from gate : CIRCUIT!LogicGate
+    to gate : CIRCUIT!LogicGate (
+        name <- 'modified_' + gate.name
+        -- Nie musisz kopiować reszty - refining robi to automatycznie
+    )
+}
+--rule RemoveDoubleNegations {
+    --from
+      --  not_gate : CIRCUIT!LogicGate (
+     --       (not_gate.type = #NOT and 
+    --        not_gate.inputs->first().sourceGate.type = #NOT) or (
+   --         	not_gate.type = #NOT and not_gate.output.targetGate.type = #NOT)
+  --      )
+ --   to 
+--}
+
+
+--rule removeGate {
+--	from
+--		not_gate : CIRCUIT!LogicGate (not_gate.type = #NOT)
+--	to 
+--}
+
+rule BypassDoubleNegation {
+    from
+        first_not : CIRCUIT!LogicGate (
+            first_not.type = #NOT and
+            first_not.output.targetGate.oclIsTypeOf(CIRCUIT!LogicGate) and
+            first_not.output.targetGate.type = #NOT
+        )
+    to
+        bypass_connection : CIRCUIT!Connection (
+            name <- 'bypass_double_not',
+            id <- 'bypass_' + first_not.id,
+            -- Od input terminal
+            sourceGate <- first_not.inputs->first().sourceGate,
+            sourceTerminal <- first_not.inputs->first().sourceTerminal,
+            -- Bezpośrednio do output terminal
+            targetGate <- first_not.output.targetGate.output.targetGate,
+            targetTerminal <- first_not.output.targetGate.output.targetTerminal
+        )
+}
+
+

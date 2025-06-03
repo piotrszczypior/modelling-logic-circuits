@@ -1,0 +1,55 @@
+-- @path CIRCUIT=/logic-circuit-model/model/circuit.ecore
+
+module circuit2circuit2;
+create OUT : CIRCUIT from IN : CIRCUIT;
+
+rule CopyCircuit {
+    from circ : CIRCUIT!LogicCircuit
+    to new_circ : CIRCUIT!LogicCircuit (
+        name <- circ.name,
+        gates <- circ.gates,
+        connections <- circ.connections,
+        inputs <- circ.inputs,
+        outputs <- circ.outputs
+    )
+}
+
+-- Zmień nazwy bramek
+rule RenameGate {
+    from gate : CIRCUIT!LogicGate
+    to new_gate : CIRCUIT!LogicGate (
+        id <- gate.id,
+        name <- 'renamed_' + gate.name,  -- Teraz zadziała!
+        type <- gate.type
+    )
+}
+
+-- Skopiuj połączenia
+rule CopyConnection {
+    from conn : CIRCUIT!Connection
+    to new_conn : CIRCUIT!Connection (
+        name <- conn.name,
+        id <- conn.id,
+        sourceGate <- conn.sourceGate,
+        targetGate <- conn.targetGate,
+        sourceTerminal <- conn.sourceTerminal,
+        targetTerminal <- conn.targetTerminal
+    )
+}
+
+-- Skopiuj terminale
+rule CopyInputTerminal {
+    from term : CIRCUIT!InputTerminal
+    to new_term : CIRCUIT!InputTerminal (
+        name <- term.name,
+        id <- term.id
+    )
+}
+
+rule CopyOutputTerminal {
+    from term : CIRCUIT!OutputTerminal
+    to new_term : CIRCUIT!OutputTerminal (
+        name <- term.name,
+        id <- term.id
+    )
+}

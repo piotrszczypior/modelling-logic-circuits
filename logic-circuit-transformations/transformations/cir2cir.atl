@@ -1,0 +1,96 @@
+-- @path CIRCUIT=/logic-circuit-model/model/circuit.ecore
+
+module cir2cir;
+create OUT : CIRCUIT from IN : CIRCUIT;
+
+rule CopyCircuit {
+    from circ : CIRCUIT!LogicCircuit
+    to new_circ : CIRCUIT!LogicCircuit (
+        name <- circ.name,
+        gates <- circ.gates,
+        connections <- circ.connections,
+        inputs <- circ.inputs,
+        outputs <- circ.outputs
+    )
+}
+
+-- Skopiuj wszystkie bramki
+rule CopyGates {
+    from gate : CIRCUIT!LogicGate
+    to new_gate : CIRCUIT!LogicGate (
+        name <- gate.name + '_changed',
+        id <- gate.id,
+        type <- gate.type
+    )
+}
+
+-- Skopiuj wszystkie połączenia
+rule CopyConnections {
+    from conn : CIRCUIT!Connection (
+    	not thisModule.isDoubleNotConnection(conn) 
+		--or
+		--not thisModule.isOutputOfDoubleNot(conn)
+	)
+    to new_conn : CIRCUIT!Connection (
+        name <- conn.name,
+        id <- conn.id,
+        sourceGate <- conn.sourceGate,
+        targetGate <- conn.targetGate,
+        sourceTerminal <- conn.sourceTerminal,
+        targetTerminal <- conn.targetTerminal
+    )
+}
+
+-- Skopiuj wszystkie wejścia
+rule CopyInputTerminals {
+    from input : CIRCUIT!InputTerminal
+    to new_input : CIRCUIT!InputTerminal (
+        name <- input.name,
+        id <- input.id
+    )
+}
+
+-- Skopiuj wszystkie wyjścia
+rule CopyOutputTerminals {
+    from output : CIRCUIT!OutputTerminal
+    to new_output : CIRCUIT!OutputTerminal (
+        name <- output.name,
+        id <- output.id
+    )
+}
+
+helper def: isDoubleNotConnection(conn : CIRCUIT!Connection) : Boolean =
+	if	conn.sourceGate.oclIsUndefined() or conn.targetGate.oclIsUndefined() then
+		false 
+	else 
+		(conn.sourceGate.type = #NOT and conn.targetGate.type = #NOT)
+	 endif;
+
+	 
+helper def: isOutputOfDoubleNot(conn: CIRCUIT!Connection) : Boolean =
+if conn.sourceGate.oclIsUndefined() then
+false
+else 
+if not conn.sourceGate.oclIsKindOf(CIRCUIT!LogicGate) then
+false
+else
+if conn.sourceGate.type <> #NOT then
+false
+else
+if conn.sourceGate.inputs->isEmpty() then
+false
+else
+let firstInput : CIRCUIT!Connection = conn.sourceGate.inputs->first() in
+if firstInput.sourceGate.oclIsUndefined() then
+false
+else
+if not firstInput.sourceGate.oclIsKindOf(CIRCUIT!LogicGate) then
+false
+else
+firstInput.sourceGate.type = #NOT
+endif
+endif
+endif
+endif
+endif
+endif;

@@ -1,8 +1,8 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: %pluginName
-Bundle-SymbolicName: LogicCircuitMetamodel;singleton:=true
-Automatic-Module-Name: LogicCircuitMetamodel
+Bundle-SymbolicName: logic-circuit-model;singleton:=true
+Automatic-Module-Name: logic-circuit-model
 Bundle-Version: 0.1.0.qualifier
 Bundle-ClassPath: .
 Bundle-Vendor: %providerName

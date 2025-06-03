@@ -19,7 +19,8 @@ import org.eclipse.emf.common.util.EList;
  * </ul>
  *
  * @see circuit.CircuitPackage#getLogicGate()
- * @model
+ * @model annotation="http://www.eclipse.org/emf/2002/Ecore constraints='NotGateShouldHaveOneInput'"
+ *        annotation="http://www.eclipse.org/emf/2002/Ecore/OCL/Pivot NotGateShouldHaveOneInput='self.type = GateType::NOT implies self.inputs-&gt;size() = 1'"
  * @generated
  */
 public interface LogicGate extends LogicElement {
