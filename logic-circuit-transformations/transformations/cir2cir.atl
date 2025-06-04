@@ -14,9 +14,11 @@ rule CopyCircuit {
     )
 }
 
--- Skopiuj wszystkie bramki
+
 rule CopyGates {
-    from gate : CIRCUIT!LogicGate
+    from gate : CIRCUIT!LogicGate (
+    	not thisModule.isOneOfDoubleNotGate(gate)	
+    )
     to new_gate : CIRCUIT!LogicGate (
         name <- gate.name + '_changed',
         id <- gate.id,
@@ -24,10 +26,11 @@ rule CopyGates {
     )
 }
 
--- Skopiuj wszystkie połączenia
+
 rule CopyConnections {
    from conn : CIRCUIT!Connection (
-   		not thisModule.isDoubleNotConnection(conn) and 
+   		not thisModule.isInputToDoubleNot(conn) and 
+		not thisModule.isDoubleNotConnection(conn) and
 		not thisModule.isOutputOfDoubleNot(conn)
    )
    to new_conn : CIRCUIT!Connection (
@@ -40,7 +43,7 @@ rule CopyConnections {
    )
 }
 
--- Skopiuj wszystkie wejścia
+
 rule CopyInputTerminals {
     from input : CIRCUIT!InputTerminal
     to new_input : CIRCUIT!InputTerminal (
@@ -49,7 +52,7 @@ rule CopyInputTerminals {
     )
 }
 
--- Skopiuj wszystkie wyjścia
+
 rule CopyOutputTerminals {
     from output : CIRCUIT!OutputTerminal
     to new_output : CIRCUIT!OutputTerminal (
@@ -57,6 +60,55 @@ rule CopyOutputTerminals {
         id <- output.id
     )
 }
+
+rule BypassDoubleNotConnection {
+	from
+		connection : CIRCUIT!Connection (
+			thisModule.isDoubleNotConnection(connection)
+		)
+	to bypassConnection : CIRCUIT!Connection (
+		name <- connection.sourceGate.inputs->first().name + '_bypassed',
+        id <- connection.sourceGate.inputs->first().id + '_bypassed',
+        sourceGate <- connection.sourceGate.inputs->first().sourceGate,
+        sourceTerminal <- connection.sourceGate.inputs->first().sourceTerminal,
+        targetGate <- connection.targetGate.output.targetGate,
+        targetTerminal <- connection.targetGate.output.targetTerminal
+	)
+}
+
+helper def : isOneOfDoubleNotGate(gate : CIRCUIT!LogicGate) : Boolean = 
+	if gate.type <> #NOT then
+        false
+    else
+        -- NOT gate produces output into another NOT gate
+        let feedsIntoNot : Boolean = 
+            if not gate.output.oclIsUndefined() then
+                if not gate.output.targetGate.oclIsUndefined() then
+                    gate.output.targetGate.type = #NOT
+                else
+                    false
+                endif
+            else
+                false
+            endif
+        in
+        -- NOT gate is fed by another NOT gate  
+        let fedByNot : Boolean = 
+            gate.inputs->exists(conn | 
+                if not conn.oclIsUndefined() then
+                    if not conn.sourceGate.oclIsUndefined() then
+                        conn.sourceGate.type = #NOT
+                    else
+                        false
+                    endif
+                else
+                    false
+                endif
+            ) 
+		in
+        feedsIntoNot or fedByNot
+    endif;
+
 
 helper def: isDoubleNotConnection(conn : CIRCUIT!Connection) : Boolean =
 	if	conn.sourceGate.oclIsUndefined() or conn.targetGate.oclIsUndefined() then
@@ -77,3 +129,23 @@ helper def: isOutputOfDoubleNot(conn: CIRCUIT!Connection) : Boolean =
 		 	conn.sourceGate.inputs->first().sourceGate.type = #NOT)
 		endif
 	endif;
+			
+
+helper def : isInputToDoubleNot(conn : CIRCUIT!Connection) : Boolean =
+    if conn.targetGate.oclIsUndefined() then
+        false
+    else
+        if conn.targetGate.type = #NOT then
+			if conn.targetGate.output.oclIsUndefined() then
+				false
+			else 
+				if conn.targetGate.output.targetGate.oclIsUndefined() then
+					false 
+				else 
+					conn.targetGate.output.targetGate.type = #NOT
+				endif
+			endif
+		else
+			false 
+		endif
+    endif;
