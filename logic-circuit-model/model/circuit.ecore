@@ -2,8 +2,7 @@
 <ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="circuit" nsURI="http://www.example.org/circuit" nsPrefix="circuit">
   <eClassifiers xsi:type="ecore:EClass" name="LogicCircuit">
-    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"
-        changeable="false"/>
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="gates" upperBound="-1"
         eType="#//LogicGate" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="connections" lowerBound="1"

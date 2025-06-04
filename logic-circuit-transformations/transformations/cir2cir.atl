@@ -6,7 +6,7 @@ create OUT : CIRCUIT from IN : CIRCUIT;
 rule CopyCircuit {
     from circ : CIRCUIT!LogicCircuit
     to new_circ : CIRCUIT!LogicCircuit (
-        name <- circ.name,
+        name <- 'changed',
         gates <- circ.gates,
         connections <- circ.connections,
         inputs <- circ.inputs,
@@ -26,19 +26,18 @@ rule CopyGates {
 
 -- Skopiuj wszystkie połączenia
 rule CopyConnections {
-    from conn : CIRCUIT!Connection (
-    	not thisModule.isDoubleNotConnection(conn) 
-		--or
-		--not thisModule.isOutputOfDoubleNot(conn)
-	)
-    to new_conn : CIRCUIT!Connection (
-        name <- conn.name,
-        id <- conn.id,
-        sourceGate <- conn.sourceGate,
-        targetGate <- conn.targetGate,
-        sourceTerminal <- conn.sourceTerminal,
-        targetTerminal <- conn.targetTerminal
-    )
+   from conn : CIRCUIT!Connection (
+   		not thisModule.isDoubleNotConnection(conn) and 
+		not thisModule.isOutputOfDoubleNot(conn)
+   )
+   to new_conn : CIRCUIT!Connection (
+       name <- conn.name,
+       id <- conn.id,
+       sourceGate <- conn.sourceGate,
+       targetGate <- conn.targetGate,
+       sourceTerminal <- conn.sourceTerminal,
+       targetTerminal <- conn.targetTerminal
+   )
 }
 
 -- Skopiuj wszystkie wejścia
@@ -64,33 +63,17 @@ helper def: isDoubleNotConnection(conn : CIRCUIT!Connection) : Boolean =
 		false 
 	else 
 		(conn.sourceGate.type = #NOT and conn.targetGate.type = #NOT)
-	 endif;
+	endif;
 
 	 
 helper def: isOutputOfDoubleNot(conn: CIRCUIT!Connection) : Boolean =
-if conn.sourceGate.oclIsUndefined() then
-false
-else 
-if not conn.sourceGate.oclIsKindOf(CIRCUIT!LogicGate) then
-false
-else
-if conn.sourceGate.type <> #NOT then
-false
-else
-if conn.sourceGate.inputs->isEmpty() then
-false
-else
-let firstInput : CIRCUIT!Connection = conn.sourceGate.inputs->first() in
-if firstInput.sourceGate.oclIsUndefined() then
-false
-else
-if not firstInput.sourceGate.oclIsKindOf(CIRCUIT!LogicGate) then
-false
-else
-firstInput.sourceGate.type = #NOT
-endif
-endif
-endif
-endif
-endif
-endif;
+	if conn.sourceGate.oclIsUndefined() then
+		false
+	else 
+		if conn.sourceGate.inputs->isEmpty() or conn.sourceGate.inputs->first().sourceGate.oclIsUndefined() then 
+			false 
+		else
+			(conn.sourceGate.type = #NOT and
+		 	conn.sourceGate.inputs->first().sourceGate.type = #NOT)
+		endif
+	endif;
