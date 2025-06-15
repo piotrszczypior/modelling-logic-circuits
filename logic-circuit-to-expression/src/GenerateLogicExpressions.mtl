@@ -1,0 +1,94 @@
+[comment encoding = UTF-8 /]
+[**
+ * The documentation of the module GenerateLogicExpressions.
+ * @version 1.0.0
+ * @since 1.0.0
+ */]
+[module GenerateLogicExpressions('http://www.example.org/circuit')/]
+
+[**
+ * Main template for transformation from logic circuit model to list of expressions.
+ * 
+ * Expressions are built in the following way:
+ * - For each output terminal a separate expression is created
+ * - Each expression is ended with a semicolon
+ * - Expressions are enclosed with parentheses for proper grouping
+ * - Special handling for unary gate NOT (prefix notation)
+ * - Binary and n-ary gates use infix notation with operators between inputs
+ *
+ * The following meta expression represents the transformation rules:
+ * output_terminal_name = (input_terminal_name GATE_OPERATOR another_input_terminal_name);
+ * 
+ * Example output:
+ * u = (a AND b);
+ * v = (NOT c);
+ * 
+ * @param circuit - logic circuit model to transform
+ * @main 
+ */]
+[template public generateExpressions(circuit : circuit::LogicCircuit) ]
+  [file ('file.txt', overwrite, 'UTF-8')]
+	[for (terminal : circuit::OutputTerminal | circuit.outputs)]
+	  [terminal.handleTerminal()/]
+	[/for]
+  [/file]
+[/template]
+
+[**
+ * Handles output terminal and generates assignment expression.
+ *
+ * @param terminal - output terminal to process
+ * @return formatted assignment expression in form of output_terminal_name = expression;
+ */]
+[template public handleTerminal(terminal: circuit::OutputTerminal) post(self.removeAllNewlines().trim())]
+  [let expression = terminal.name.trim() + ' = ' + terminal.output.generateExpression() + ';']
+    [expression.removeAllNewlines()/]
+  [/let]
+[/template]
+
+[**
+ * Generates expression for a connection (input or gate output).
+ *
+ * @param connection - connection to process
+ * @return expression string (terminal name or gate expression in parentheses)
+ */]
+[template private generateExpression(connection : circuit::Connection) post(self.trim())]
+  [if (connection.sourceGate == null)] 
+	[connection.sourceTerminal.name.trim()/]
+  [else]
+    [let parenthesesExpression = '(' + connection.sourceGate.generateGateExpression() + ')']
+      [parenthesesExpression/]
+    [/let]
+  [/if]
+[/template]
+
+[**
+ * Handles logic gate and generates appropriate expression.
+ * Special handling for unary NOT gate and other n-ary gates.
+ *
+ * @param gate - logic gate to process
+ * @return gate expression string
+ */]
+[template private generateGateExpression(gate : circuit::LogicGate) post(self.trim())]
+  [if (gate.type == circuit::GateType::NOT)]
+      [gate.type.toString() + ' ' + gate.inputs->first().generateExpression()/]
+  [else]
+    [for (input : circuit::Connection | gate.inputs) separator(' ' + gate.type.toString() + ' ')]
+	  [input.generateExpression().toString().trim()/]
+    [/for]
+  [/if] 
+[/template]
+
+[**
+ * Removes all types of newline characters from the input text.
+ * Handles line endings of:
+ * - Windows (\r\n)
+ * - Unix/Linux (\n) 
+ * - Old Mac (\r)
+ *
+ * @param text - input string that may contain newline characters
+ * @return cleaned string with all newline characters removed
+ */]
+[template private removeAllNewlines(text : String)]
+  [text.replaceAll('\r\n', '').replaceAll('\n', '').replaceAll('\r', '')/]
+[/template]
