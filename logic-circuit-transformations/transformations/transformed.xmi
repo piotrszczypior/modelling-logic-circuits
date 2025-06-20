@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<circuit:LogicCircuit xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:circuit="http://www.example.org/circuit" name="changed">
+  <connections name="to_gate_0_bypassed" id="to_gate_0_bypassed" sourceTerminal="//@inputs.0" targetTerminal="//@outputs.0"/>
+  <outputs name="name" id="id" output="//@connections.0"/>
+  <inputs name="name2" id="id2" input="//@connections.0"/>
+</circuit:LogicCircuit>

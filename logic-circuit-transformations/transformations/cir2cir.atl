@@ -17,7 +17,11 @@ rule CopyCircuit {
 
 rule CopyGates {
     from gate : CIRCUIT!LogicGate (
-    	not thisModule.isOneOfDoubleNotGate(gate)	
+    	not thisModule.isOneOfDoubleNotGate(gate) and
+		not thisModule.isNotInAndToNotPattern(gate, #AND) and
+		not thisModule.isAndFeedingToNotPattern(gate, #AND) and
+		not thisModule.isAndFeedingToNotPattern(gate, #OR) and 
+		not thisModule.isNotInAndToNotPattern(gate, #OR) 
     )
     to new_gate : CIRCUIT!LogicGate (
         name <- gate.name + '_changed',
@@ -31,7 +35,9 @@ rule CopyConnections {
    from conn : CIRCUIT!Connection (
    		not thisModule.isInputToDoubleNot(conn) and 
 		not thisModule.isDoubleNotConnection(conn) and
-		not thisModule.isOutputOfDoubleNot(conn)
+		not thisModule.isOutputOfDoubleNot(conn) and
+		not thisModule.isConnectionInAndToNotPattern(conn, #AND) and 
+		not thisModule.isConnectionInAndToNotPattern(conn, #OR) 
    )
    to new_conn : CIRCUIT!Connection (
        name <- conn.name,
@@ -76,6 +82,30 @@ rule BypassDoubleNotConnection {
 	)
 }
 
+rule ReplaceAndToNotPatternWithNand {
+	from andGate : CIRCUIT!LogicGate (
+		thisModule.isAndFeedingToNotPattern(andGate, #AND)
+	)
+	to nandGate: CIRCUIT!LogicGate (
+		name <- andGate.name + '_NAND',
+		id <- andGate.id,
+		type <- #NAND,
+		output <- andGate.output.targetGate.output
+	)
+}
+
+rule ReplaceOrToNotPatternWithNor {
+	from orGate : CIRCUIT!LogicGate (
+		thisModule.isAndFeedingToNotPattern(orGate, #OR)	
+	)
+	to norGate : CIRCUIT!LogicGate (
+		name <- orGate.name + '_NOR',
+		id <- orGate.id,
+		type <- #NOR,
+		output <- orGate.output.targetGate.output	
+	) 
+}
+
 helper def : isOneOfDoubleNotGate(gate : CIRCUIT!LogicGate) : Boolean = 
 	if gate.type <> #NOT then
         false
@@ -111,7 +141,9 @@ helper def : isOneOfDoubleNotGate(gate : CIRCUIT!LogicGate) : Boolean =
 
 
 helper def: isDoubleNotConnection(conn : CIRCUIT!Connection) : Boolean =
-	if	conn.sourceGate.oclIsUndefined() or conn.targetGate.oclIsUndefined() then
+	if	conn.sourceGate.oclIsUndefined() or 
+		conn.targetGate.oclIsUndefined() 
+	then
 		false 
 	else 
 		(conn.sourceGate.type = #NOT and conn.targetGate.type = #NOT)
@@ -149,3 +181,36 @@ helper def : isInputToDoubleNot(conn : CIRCUIT!Connection) : Boolean =
 			false 
 		endif
     endif;
+			
+			
+helper def : isAndFeedingToNotPattern(gate: CIRCUIT!LogicGate, targetType: CIRCUIT!GateType) : Boolean = 
+	gate.type = targetType and thisModule.hasNotInput(gate);
+			
+			
+helper def : hasNotInput(gate: CIRCUIT!LogicGate) : Boolean = 
+	if gate.output.targetGate.oclIsUndefined() then 
+		false 
+	else 
+		gate.output.targetGate.type = #NOT
+	endif;
+		
+		
+helper def : isConnectionInAndToNotPattern(connection: CIRCUIT!Connection, targetType: CIRCUIT!GateType) : Boolean =
+	if connection.targetGate.oclIsUndefined() or 
+	   connection.sourceGate.oclIsUndefined() 
+    then
+		false
+	else 
+		connection.sourceGate.type = targetType and
+		connection.targetGate.type = #NOT
+	endif;
+	
+	
+helper def : isNotInAndToNotPattern(gate: CIRCUIT!LogicGate, targetType: CIRCUIT!GateType) : Boolean = 
+	if gate.type <> #NOT or 
+	   gate.inputs->first().sourceGate.oclIsUndefined()
+	then 
+		false
+	else 
+		gate.inputs->first().sourceGate.type = targetType
+	endif;

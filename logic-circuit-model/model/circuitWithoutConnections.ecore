@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ecore:EPackage xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:ecore="http://www.eclipse.org/emf/2002/Ecore" name="LogicCircuit" nsURI="http://www.example.org/logiccircuit" nsPrefix="logiccircuit">
+  <eClassifiers xsi:type="ecore:EClass" name="LogicCircuit"/>
+  <eClassifiers xsi:type="ecore:EClass" name="CircuitElement" abstract="true">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" lowerBound="1" eType="ecore:EDataType http://www.eclipse.org/emf/2002/Ecore#//EString"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EClass" name="LogicGate" eSuperTypes="#//CircuitElement">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" lowerBound="1" eType="#//GateType"/>
+  </eClassifiers>
+  <eClassifiers xsi:type="ecore:EEnum" name="GateType">
+    <eLiterals name="AND"/>
+    <eLiterals name="OR" value="1"/>
+    <eLiterals name="NOT" value="2"/>
+    <eLiterals name="NAND" value="3"/>
+    <eLiterals name="NOR" value="4"/>
+    <eLiterals name="XOR" value="5"/>
+    <eLiterals name="NXOR" value="6"/>
+  </eClassifiers>
+</ecore:EPackage>

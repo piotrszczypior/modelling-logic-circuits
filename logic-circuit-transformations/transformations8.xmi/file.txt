@@ -1,0 +1,1 @@
+name = (NOT (name2 AND name3));
