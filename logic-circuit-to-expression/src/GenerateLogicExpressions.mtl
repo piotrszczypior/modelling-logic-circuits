@@ -56,15 +56,30 @@
  */]
 [template private generateExpression(connection : circuit::Connection) post(self.removeAllNewlines().trim())]
   [if (connection.sourceGate == null)]
-    [if (connection.sourceTerminal == null)]
-      [connection.sourceConstant.value.value/]
-    [else]
-	  [connection.sourceTerminal.name.trim()/]
-    [/if]
+   	[connection.renderTerminal()/]
   [else]
     [let parenthesesExpression = '(' + connection.sourceGate.generateGateExpression() + ')']
       [parenthesesExpression/]
     [/let]
+  [/if]
+[/template]
+
+
+[**
+ * Renders terminal node. Input terminal or const element. 
+ *
+ * @param connection - connection without child gate
+ * @return 0 or 1 for const element or name of input terminal.
+ */]
+[template private renderTerminal(connection : circuit::Connection) post(self.removeAllNewlines().trim())]
+  [if (connection.sourceTerminal == null)]
+    [if (connection.sourceConstant.value = circuit::LogicConstant::HIGH)]
+      	  1
+    [else]
+      	  0
+    [/if] 
+  [else]
+	[connection.sourceTerminal.name.trim()/]
   [/if]
 [/template]
 
