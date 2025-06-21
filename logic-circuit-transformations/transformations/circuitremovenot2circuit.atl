@@ -1,0 +1,160 @@
+-- @path CIRCUIT=/logic-circuit-model/model/circuit.ecore
+
+module circuitremovenot2circuit;
+create OUT : CIRCUIT from IN : CIRCUIT;
+
+-- Global variable to track processed gates
+helper def: processedGates: Set(String) = Set{};
+
+rule CopyCircuit {
+from circ : CIRCUIT!LogicCircuit
+to new_circ : CIRCUIT!LogicCircuit (
+    name <- circ.name,
+    gates <- circ.gates->select(g | not g.isPartOfNotChain()),
+    connections <- circ.connections->select(c | not c.isPartOfNotChainConnection()),
+    inputs <- circ.inputs,
+    outputs <- circ.outputs
+)
+}
+
+rule SimplifyNotChain {
+from
+    startGate: CIRCUIT!LogicGate (
+        startGate.type = #NOT and
+        startGate.isStartNot() and 
+        not startGate.isProcessed()
+    )
+to
+    -- Create single NOT for odd chains
+    simplifiedGate: CIRCUIT!LogicGate (
+        if startGate.getChainLength().mod(2) = 1 then
+            OclUndefined
+        else
+            OclUndefined
+        endif
+    ),
+    
+    -- Create simplified connection
+    newConn: CIRCUIT!Connection (
+        name <- 'simplified_conn_' + startGate.id.toString(),
+        id <- startGate.id.toString() + '_conn',
+        sourceGate <- startGate.getChainSource(),
+        targetGate <- if startGate.getChainLength().mod(2) = 1 then
+                        simplifiedGate
+                      else
+                        startGate.getChainTarget()
+                      endif
+    )
+do {
+    -- Mark all gates in chain as processed
+    thisModule.markChainAsProcessed(startGate);
+    
+    -- Set simplified gate properties if needed
+    if (startGate.getChainLength().mod(2) = 1) {
+        simplifiedGate.name <- 'simplified_NOT_' + startGate.id.toString();
+        simplifiedGate.id <- startGate.id.toString() + '_simplified';
+        simplifiedGate.type <- #NOT;
+    }
+}
+}
+
+-- Helper to check if gate is start of NOT chain
+helper context CIRCUIT!LogicGate def: isStartNot(): Boolean =
+    self.type = #NOT and
+    (self.inputs->isEmpty() or 
+     self.inputs->first().sourceGate.oclIsUndefined() or
+     not (self.inputs->first().sourceGate.oclIsKindOf(CIRCUIT!LogicGate) and 
+          self.inputs->first().sourceGate.type = #NOT));
+
+-- Helper to check if gate is end of NOT chain  
+helper context CIRCUIT!LogicGate def: isEndNot(): Boolean =
+    self.type = #NOT and
+    (self.outputs->isEmpty() or
+     self.outputs->first().targetGate.oclIsUndefined() or
+     not (self.outputs->first().targetGate.oclIsKindOf(CIRCUIT!LogicGate) and
+          self.outputs->first().targetGate.type = #NOT));
+
+-- Helper to check if gate is middle of NOT chain
+helper context CIRCUIT!LogicGate def: isMiddleNot(): Boolean =
+    self.type = #NOT and
+    not self.isStartNot() and
+    not self.isEndNot();
+
+-- Helper to get chain length
+helper context CIRCUIT!LogicGate def: getChainLength(): Integer =
+    if not self.isStartNot() then
+        0
+    else
+        let chain: Sequence(CIRCUIT!LogicGate) = self.getNotChain()
+        in chain->size()
+    endif;
+
+-- Helper to get NOT chain sequence
+helper context CIRCUIT!LogicGate def: getNotChain(): Sequence(CIRCUIT!LogicGate) =
+    if not self.isStartNot() then
+        Sequence{}
+    else
+        let result: Sequence(CIRCUIT!LogicGate) = Sequence{self}
+        in self.getRestOfChain(result)
+    endif;
+
+-- Helper to recursively build chain
+helper context CIRCUIT!LogicGate def: getRestOfChain(currentChain: Sequence(CIRCUIT!LogicGate)): Sequence(CIRCUIT!LogicGate) =
+    if self.outputs->isEmpty() or 
+       self.outputs->first().targetGate.oclIsUndefined() or
+       not (self.outputs->first().targetGate.oclIsKindOf(CIRCUIT!LogicGate) and
+            self.outputs->first().targetGate.type = #NOT) then
+        currentChain
+    else
+        let nextGate: CIRCUIT!LogicGate = self.outputs->first().targetGate
+        in nextGate.getRestOfChain(currentChain->append(nextGate))
+    endif;
+
+-- Helper to check if gate is part of NOT chain
+helper context CIRCUIT!LogicGate def: isPartOfNotChain(): Boolean =
+    self.type = #NOT and
+    (self.isStartNot() or self.isMiddleNot() or self.isEndNot());
+
+-- Helper to check if connection is part of NOT chain
+helper context CIRCUIT!Connection def: isPartOfNotChainConnection(): Boolean =
+    (self.sourceGate.oclIsKindOf(CIRCUIT!LogicGate) and
+     self.sourceGate.type = #NOT and
+     self.targetGate.oclIsKindOf(CIRCUIT!LogicGate) and
+     self.targetGate.type = #NOT) or
+    (self.sourceGate.oclIsKindOf(CIRCUIT!LogicGate) and
+     self.sourceGate.isPartOfNotChain()) or
+    (self.targetGate.oclIsKindOf(CIRCUIT!LogicGate) and
+     self.targetGate.isPartOfNotChain());
+
+-- Helper to check if gate is processed
+helper context CIRCUIT!LogicGate def: isProcessed(): Boolean =
+    thisModule.processedGates->includes(self.id.toString());
+
+-- Helper to get chain source
+helper context CIRCUIT!LogicGate def: getChainSource(): CIRCUIT!LogicElement =
+    if self.inputs->isEmpty() then
+        OclUndefined
+    else
+        self.inputs->first().sourceGate
+    endif;
+
+-- Helper to get chain target
+helper context CIRCUIT!LogicGate def: getChainTarget(): CIRCUIT!LogicElement =
+    let chain: Sequence(CIRCUIT!LogicGate) = self.getNotChain()
+    in if chain->isEmpty() then
+         OclUndefined
+       else
+         let lastGate: CIRCUIT!LogicGate = chain->last()
+         in if lastGate.outputs->isEmpty() then
+              OclUndefined
+            else
+              lastGate.outputs->first().targetGate
+            endif
+       endif;
+
+-- Helper to mark chain as processed
+helper def: markChainAsProcessed(startGate: CIRCUIT!LogicGate): OclVoid =
+    let chain: Sequence(CIRCUIT!LogicGate) = startGate.getNotChain()
+    in chain->iterate(gate; acc: Set(String) = thisModule.processedGates |
+         thisModule.processedGates->including(gate.id.toString())
+       );

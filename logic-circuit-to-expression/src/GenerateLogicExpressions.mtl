@@ -14,6 +14,7 @@
  * - Each expression is ended with a semicolon
  * - Expressions are enclosed with parentheses for proper grouping
  * - Special handling for unary gate NOT (prefix notation)
+ * - Constant are represented using 0 and 1
  * - Binary and n-ary gates use infix notation with operators between inputs
  *
  * The following meta expression represents the transformation rules:
@@ -22,6 +23,7 @@
  * Example output:
  * u = (a AND b);
  * v = (NOT c);
+ * c = (a AND 1);
  * 
  * @param circuit - logic circuit model to transform
  * @main 
@@ -47,14 +49,18 @@
 [/template]
 
 [**
- * Generates expression for a connection (input or gate output).
+ * Generates expression for a connection (input or gate output or constant).
  *
  * @param connection - connection to process
- * @return expression string (terminal name or gate expression in parentheses)
+ * @return expression string (terminal name, constant value or gate expression in parentheses)
  */]
-[template private generateExpression(connection : circuit::Connection) post(self.trim())]
-  [if (connection.sourceGate == null)] 
-	[connection.sourceTerminal.name.trim()/]
+[template private generateExpression(connection : circuit::Connection) post(self.removeAllNewlines().trim())]
+  [if (connection.sourceGate == null)]
+    [if (connection.sourceTerminal == null)]
+      [connection.sourceConstant.value.value/]
+    [else]
+	  [connection.sourceTerminal.name.trim()/]
+    [/if]
   [else]
     [let parenthesesExpression = '(' + connection.sourceGate.generateGateExpression() + ')']
       [parenthesesExpression/]

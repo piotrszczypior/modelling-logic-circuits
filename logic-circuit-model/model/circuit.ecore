@@ -11,6 +11,8 @@
         upperBound="-1" eType="#//OutputTerminal" containment="true"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="inputs" lowerBound="1"
         upperBound="-1" eType="#//InputTerminal" containment="true"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="consts" upperBound="-1"
+        eType="#//ConstantElement" containment="true"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="LogicElement" abstract="true">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="name" unique="false" lowerBound="1"
@@ -24,7 +26,7 @@
     <eLiterals name="NAND" value="3"/>
     <eLiterals name="NOR" value="4"/>
     <eLiterals name="XOR" value="5"/>
-    <eLiterals name="NXOR" value="6"/>
+    <eLiterals name="XNOR" value="6" literal="XNOR"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="LogicGate" eSuperTypes="#//LogicElement">
     <eStructuralFeatures xsi:type="ecore:EAttribute" name="type" lowerBound="1" eType="#//GateType"/>
@@ -39,22 +41,24 @@
     <eStructuralFeatures xsi:type="ecore:EReference" name="targetGate" eType="#//LogicGate"
         eOpposite="#//LogicGate/inputs"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="sourceTerminal" eType="#//InputTerminal"
-        eOpposite="#//InputTerminal/input"/>
+        eOpposite="#//InputTerminal/inputs"/>
     <eStructuralFeatures xsi:type="ecore:EReference" name="targetTerminal" eType="#//OutputTerminal"
         eOpposite="#//OutputTerminal/output"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="sourceConstant" eType="#//ConstantElement"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="OutputTerminal" eSuperTypes="#//LogicElement">
     <eStructuralFeatures xsi:type="ecore:EReference" name="output" lowerBound="1"
         eType="#//Connection" eOpposite="#//Connection/targetTerminal"/>
   </eClassifiers>
   <eClassifiers xsi:type="ecore:EClass" name="InputTerminal" eSuperTypes="#//LogicElement">
-    <eStructuralFeatures xsi:type="ecore:EReference" name="input" lowerBound="1" eType="#//Connection"
-        eOpposite="#//Connection/sourceTerminal"/>
+    <eStructuralFeatures xsi:type="ecore:EReference" name="inputs" lowerBound="1"
+        upperBound="-1" eType="#//Connection" changeable="false" eOpposite="#//Connection/sourceTerminal"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EEnum" name="LogicConstants">
-    <eLiterals name="LOW"/>
-    <eLiterals name="HIGH" value="1"/>
+  <eClassifiers xsi:type="ecore:EEnum" name="LogicConstant">
+    <eLiterals name="LOW" literal="LOW"/>
+    <eLiterals name="HIGH" value="1" literal="HIGH"/>
   </eClassifiers>
-  <eClassifiers xsi:type="ecore:EClass" name="AbstractConnection" abstract="true"
-      eSuperTypes="#//LogicElement"/>
+  <eClassifiers xsi:type="ecore:EClass" name="ConstantElement" eSuperTypes="#//LogicElement">
+    <eStructuralFeatures xsi:type="ecore:EAttribute" name="value" lowerBound="1" eType="#//LogicConstant"/>
+  </eClassifiers>
 </ecore:EPackage>

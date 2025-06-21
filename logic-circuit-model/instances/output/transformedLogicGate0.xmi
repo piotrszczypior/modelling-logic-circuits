@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<circuit:LogicCircuit xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:circuit="http://www.example.org/circuit" name="changed">
+  <gates name="and_gate_0_NAND" type="NAND" inputs="//@connections.0 //@connections.1" output="//@connections.2"/>
+  <connections name="a_to_and" id="a_to_and" targetGate="//@gates.0" sourceTerminal="//@inputs.0"/>
+  <connections name="b_to_and" id="b_to_and" targetGate="//@gates.0" sourceTerminal="//@inputs.1"/>
+  <connections name="from_not" id="from_not" sourceGate="//@gates.0"/>
+  <connections name="const_to_or" id="const_to_or" sourceConstant="//@consts.0"/>
+  <connections name="from_or_simplified" id="from_or_simplified" targetTerminal="//@outputs.0" sourceConstant="//@consts.0"/>
+  <outputs name="y" id="from_or" output="//@connections.4"/>
+  <inputs name="a" id="a" inputs="//@connections.0"/>
+  <inputs name="b" id="b" inputs="//@connections.1"/>
+  <consts name="const1" value="HIGH"/>
+</circuit:LogicCircuit>

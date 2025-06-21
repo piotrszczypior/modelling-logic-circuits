@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<circuit:LogicCircuit
+    xmi:version="2.0"
+    xmlns:xmi="http://www.omg.org/XMI"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns:circuit="http://www.example.org/circuit"
+    xsi:schemaLocation="http://www.example.org/circuit /logic-circuit-model/model/circuit.ecore">
+  <gates name="and_gate_0"
+      inputs="//@connections.0 //@connections.1"
+      output="//@connections.2"/>
+  <gates name="not_gate_0"
+      type="NOT"
+      inputs="//@connections.2"
+      output="//@connections.3"/>
+  <gates name="or_gate_0"
+      type="OR"
+      inputs="//@connections.3 //@connections.4"
+      output="//@connections.5"/>
+  <connections
+      name="a_to_and"
+      id="a_to_and"
+      targetGate="//@gates.0"
+      sourceTerminal="//@inputs.0"/>
+  <connections
+      name="b_to_and"
+      id="b_to_and"
+      targetGate="//@gates.0"
+      sourceTerminal="//@inputs.1"/>
+  <connections
+      name="in_not"
+      id="in_not"
+      sourceGate="//@gates.0"
+      targetGate="//@gates.1"/>
+  <connections
+      name="from_not"
+      id="from_not"
+      sourceGate="//@gates.1"
+      targetGate="//@gates.2"/>
+  <connections
+      name="const_to_or"
+      id="const_to_or"
+      targetGate="//@gates.2"
+      sourceConstant="//@consts.0"/>
+  <connections
+      name="from_or"
+      id="from_or"
+      sourceGate="//@gates.2"
+      targetTerminal="//@outputs.0"/>
+  <outputs name="y"
+      id="from_or"
+      output="//@connections.5"/>
+  <inputs name="a"
+      id="a"
+      inputs="//@connections.0"/>
+  <inputs name="b"
+      id="b"
+      inputs="//@connections.1"/>
+  <consts name="const1"
+      value="HIGH"/>
+</circuit:LogicCircuit>

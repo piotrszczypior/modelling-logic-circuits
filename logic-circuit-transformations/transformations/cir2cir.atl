@@ -10,7 +10,8 @@ rule CopyCircuit {
         gates <- circ.gates,
         connections <- circ.connections,
         inputs <- circ.inputs,
-        outputs <- circ.outputs
+        outputs <- circ.outputs,
+		consts <- circ.consts
     )
 }
 
@@ -21,32 +22,14 @@ rule CopyGates {
 		not thisModule.isNotInAndToNotPattern(gate, #AND) and
 		not thisModule.isAndFeedingToNotPattern(gate, #AND) and
 		not thisModule.isAndFeedingToNotPattern(gate, #OR) and 
-		not thisModule.isNotInAndToNotPattern(gate, #OR) 
+		not thisModule.isNotInAndToNotPattern(gate, #OR) and 
+		not thisModule.shouldSimplifyOr(gate)
     )
     to new_gate : CIRCUIT!LogicGate (
-        name <- gate.name + '_changed',
+        name <- gate.name,
         id <- gate.id,
         type <- gate.type
     )
-}
-
-
-rule CopyConnections {
-   from conn : CIRCUIT!Connection (
-   		not thisModule.isInputToDoubleNot(conn) and 
-		not thisModule.isDoubleNotConnection(conn) and
-		not thisModule.isOutputOfDoubleNot(conn) and
-		not thisModule.isConnectionInAndToNotPattern(conn, #AND) and 
-		not thisModule.isConnectionInAndToNotPattern(conn, #OR) 
-   )
-   to new_conn : CIRCUIT!Connection (
-       name <- conn.name,
-       id <- conn.id,
-       sourceGate <- conn.sourceGate,
-       targetGate <- conn.targetGate,
-       sourceTerminal <- conn.sourceTerminal,
-       targetTerminal <- conn.targetTerminal
-   )
 }
 
 
@@ -65,6 +48,35 @@ rule CopyOutputTerminals {
         name <- output.name,
         id <- output.id
     )
+}
+
+rule CopyConstants {
+	from const : CIRCUIT!ConstantElement
+    to new_const : CIRCUIT!ConstantElement (
+        name <- const.name,
+        id <- const.id,
+		value <- const.value
+    )
+}
+
+rule CopyConnections {
+   from conn : CIRCUIT!Connection (
+   		not thisModule.isInputToDoubleNot(conn) and 
+		not thisModule.isDoubleNotConnection(conn) and
+		not thisModule.isOutputOfDoubleNot(conn) and
+		not thisModule.isConnectionInAndToNotPattern(conn, #AND) and 
+		not thisModule.isConnectionInAndToNotPattern(conn, #OR) and
+		not thisModule.isOutputFromSimplifiedOr(conn)
+   )
+   to new_conn : CIRCUIT!Connection (
+       name <- conn.name,
+       id <- conn.id,
+       sourceGate <- conn.sourceGate,
+       targetGate <- conn.targetGate,
+       sourceTerminal <- conn.sourceTerminal,
+       targetTerminal <- conn.targetTerminal,
+	   sourceConstant <- conn.sourceConstant
+   )
 }
 
 rule BypassDoubleNotConnection {
@@ -106,6 +118,58 @@ rule ReplaceOrToNotPatternWithNor {
 	) 
 }
 
+
+rule ReplaceXorToNotPatternWithXnor {
+	from xorGate : CIRCUIT!LogicGate (
+		thisModule.isAndFeedingToNotPattern(xorGate, #XOR)	
+	)
+	to xnorGate : CIRCUIT!LogicGate (
+		name <- xorGate.name + '_XNOR',
+		id <- xorGate.id,
+		type <- #XNOR,
+		output <- xorGate.output.targetGate.output	
+	)
+}
+
+
+rule BypassSimplifiedOr {
+	 from
+        connection: CIRCUIT!Connection (thisModule.isOutputFromSimplifiedOr(connection))
+    to
+    constConnection: CIRCUIT!Connection (
+            name <- connection.name + '_simplified',
+            id <- connection.id + '_simplified',
+            sourceConstant <- connection.sourceGate.inputs->select(conn | 
+                not conn.sourceConstant.oclIsUndefined())->first().sourceConstant,
+            targetGate <- connection.targetGate,
+            targetTerminal <- connection.targetTerminal
+        )
+}
+
+
+helper def : isOutputFromSimplifiedOr(connection : CIRCUIT!Connection) : Boolean = 
+	if connection.sourceGate.oclIsUndefined() then
+		false
+	else 
+		connection.sourceGate.type = #OR and
+		connection.sourceGate.inputs->exists(conn | thisModule.isConnectionFromConstant(conn, #HIGH))
+	endif;
+            
+            
+helper def : shouldSimplifyOr(gate: CIRCUIT!LogicGate) : Boolean = 
+	gate.type = #OR and
+	gate.inputs->exists(conn | thisModule.isConnectionFromConstant(conn, #HIGH));
+            
+            
+helper def : isConnectionFromConstant(connection: CIRCUIT!Connection, const: CIRCUIT!LogicConstant) : Boolean = 
+	if connection.sourceConstant.oclIsUndefined() then
+		false
+	else 	
+    	--connection.sourceConstant.value = const
+		true
+	endif;
+
+            
 helper def : isOneOfDoubleNotGate(gate : CIRCUIT!LogicGate) : Boolean = 
 	if gate.type <> #NOT then
         false

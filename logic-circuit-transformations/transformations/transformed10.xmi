@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<circuit:LogicCircuit xmi:version="2.0" xmlns:xmi="http://www.omg.org/XMI" xmlns:circuit="http://www.example.org/circuit" name="changed">
+  <gates name="not_gate_0_NOR" id="not_gate_0" type="NOR" inputs="//@connections.0 //@connections.2" output="//@connections.1"/>
+  <connections name="to_gate_0" id="to_gate_0" targetGate="//@gates.0" sourceTerminal="//@inputs.0"/>
+  <connections name="from_gate_1" id="from_gate_1" sourceGate="//@gates.0" targetTerminal="//@outputs.0"/>
+  <connections name="name3_to_and0" targetGate="//@gates.0" sourceTerminal="//@inputs.1"/>
+  <outputs name="name" id="id" output="//@connections.1"/>
+  <inputs name="name2" id="id2" input="//@connections.0"/>
+  <inputs name="name3" input="//@connections.2"/>
+</circuit:LogicCircuit>
